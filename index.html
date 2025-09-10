@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Medical Equipment Transfer Tracker (SMETT)</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.3/css/all.min.css" />
+
+  <!-- LOCAL CSS (ต้องมีไฟล์ site-2/style.css) -->
+  <link rel="stylesheet" href="./style.css?v=force3" />
+</head>
+
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>MedPark Hospital</h1>
+      <h2>Smart Medical Equipment Transfer Tracker (SMETT)</h2>
+      <p class="muted">ระบบติดตามการเคลื่อนย้ายอุปกรณ์การแพทย์อัจฉริยะ</p>
+    </header>
+
+    <nav class="tabs" role="tablist" aria-label="SMETT">
+      <button class="tab active" data-tab="requested"><i class="fa-solid fa-folder-open"></i> Requested</button>
+      <button class="tab" data-tab="returned"><i class="fa-solid fa-rotate-left"></i> Returned</button>
+      <button class="tab" data-tab="report"><i class="fa-solid fa-chart-bar"></i> Report</button>
+      <button class="tab" data-tab="stats"><i class="fa-solid fa-chart-column"></i> Statistics/Datas</button>
+    </nav>
+
+    <!-- Requested -->
+    <section id="panel-requested" class="card" role="tabpanel">
+      <div class="card-head">
+        <h2>Requested</h2>
+        <button id="btn-refresh-borrow" class="btn ghost"><i class="fa-solid fa-rotate"></i> Refresh</button>
+      </div>
+
+      <div class="field">
+        <label>Available Equipment</label>
+        <div id="available-equipment-list" class="available-list"></div>
+      </div>
+
+      <div id="borrow-list" class="list"></div>
+    </section>
+
+    <!-- Returned -->
+    <section id="panel-returned" class="card hidden" role="tabpanel">
+      <div class="card-head">
+        <h2>Returned</h2>
+        <div class="actions">
+          <button id="btn-open-return" class="btn primary"><i class="fa-solid fa-box-open"></i> Return</button>
+          <button id="btn-refresh-return" class="btn ghost"><i class="fa-solid fa-rotate"></i> Refresh</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>.</label>
+        <div id="borrowed-list" class="list"></div>
+      </div>
+    </section>
+
+    <!-- Report -->
+    <section id="panel-report" class="card hidden" role="tabpanel">
+      <div class="card-head">
+        <h2>.</h2>
+        <button id="btn-refresh-report" class="btn ghost"><i class="fa-solid fa-rotate"></i> Refresh</button>
+      </div>
+
+      <div class="summary-boxes">
+        <div class="summary-box">
+          <div class="count" id="count-approved">0</div>
+          <div class="label">Approved</div>
+        </div>
+        <div class="summary-box">
+          <div class="count" id="count-pending">0</div>
+          <div class="label">Pending</div>
+        </div>
+        <div class="summary-box">
+          <div class="count" id="count-overdue">0</div>
+          <div class="label">Over 3 days</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="report-search">ค้นหา</label>
+        <input id="report-search" placeholder="ค้นหา MPC Code, เครื่องมือ, แผนก, วันที่" />
+      </div>
+      <div id="report-list" class="list mb-1">
+      </div>
+    </section>
+
+    <!-- Statistics -->
+    <section id="panel-stats" class="card hidden" role="tabpanel">
+      <div class="card-head">
+        <h2>Statistics</h2>
+        <div class="actions">
+          <button id="btn-refresh-stats" class="btn ghost"><i class="fa-solid fa-rotate"></i> Refresh</button>
+          <button id="btn-load-stats" class="btn primary"><i class="fa-solid fa-chart-simple"></i> statistics</button>
+        </div>
+      </div>
+
+      <div class="tabs small">
+        <button class="tab active" data-chart-tab="dept">By Department</button>
+        <button class="tab" data-chart-tab="type-month">By Equipment</button>
+        <button class="tab" data-chart-tab="month">Utilization</button>
+      </div>
+
+      <div id="panel-chart-dept" class="chart-panel">
+        <div class="grid-2">
+          <div class="field">
+            <label>Month</label>
+            <input type="month" id="dept-month" />
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="chart-dept"></canvas>
+        </div>
+      </div>
+
+      <div id="panel-chart-type-month" class="chart-panel">
+        <div class="grid-2">
+          <div class="field">
+            <label>Month</label>
+            <input type="month" id="type-dept-month" />
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="chart-type-month"></canvas>
+        </div>
+      </div>
+
+      <div id="panel-chart-month" class="chart-panel hidden">
+        <div class="grid-2">
+          <div class="field">
+            <label>Month</label>
+            <input type="month" id="month-month" />
+          </div>
+          <div class="field">
+            <label>Equipment Type</label>
+            <select id="month-type"></select>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="chart-month"></canvas>
+        </div>
+      </div>
+
+      <p id="stats-status" class="muted"></p>
+    </section>
+  </div>
+
+  <!-- Receive modal -->
+  <div id="receive-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" id="receive-close">&times;</span>
+      <h3 id="receive-title">รับเครื่องมือแพทย์</h3>
+      <p id="receive-desc" class="muted"></p>
+
+      <div class="field">
+        <label for="receive-dept">Department / แผนก</label>
+        <input id="receive-dept" placeholder="เช่น Ward 22AB" />
+      </div>
+
+      <div class="field">
+        <label for="receive-scan-input">Type MPC Code (เช่น MPC-9-12345)</label>
+        <input id="receive-scan-input" placeholder="พิมพ์แล้วกด Enter" />
+      </div>
+
+      <div class="video-actions">
+        <button id="qr-start" class="btn ghost"><i class="fa-solid fa-qrcode"></i> Start QR</button>
+        <button id="qr-stop" class="btn ghost"><i class="fa-solid fa-stop"></i> Stop</button>
+      </div>
+      <video id="qr-video" class="video-stream" autoplay playsinline muted></video>
+      <canvas id="qr-canvas" class="hidden"></canvas>
+
+      <ul id="receive-scanned-list" class="scanned-list"></ul>
+
+      <div class="modal-actions">
+        <button id="receive-submit" class="btn primary w-100">Submit</button>
+        <p id="receive-status" class="muted"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Return modal -->
+  <div id="return-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" id="return-close">&times;</span>
+      <h3>รับคืนเครื่อง</h3>
+      <div class="field">
+        <label for="return-input">MPC Code</label>
+        <input id="return-input" placeholder="MPC-9-12345 (พิมพ์แล้วกด Enter)" />
+      </div>
+      <div class="video-actions">
+        <button id="return-qr-start" class="btn ghost"><i class="fa-solid fa-qrcode"></i> Start QR</button>
+        <button id="return-qr-stop" class="btn ghost"><i class="fa-solid fa-stop"></i> Stop</button>
+      </div>
+      <video id="return-video" class="video-stream" autoplay playsinline muted></video>
+      <canvas id="return-canvas" class="hidden"></canvas>
+
+      <ul id="return-scanned-list" class="scanned-list"></ul>
+
+      <div class="modal-actions">
+        <button id="return-submit" class="btn primary w-100">Return</button>
+        <p id="return-status" class="muted"></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+  <script src="./script.js?v=force2"></script>
+</body>
+
+</html>
